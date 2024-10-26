@@ -1,6 +1,8 @@
-use std::thread::Scope;
-
-use crate::traits::{Eval, Simplify, VarVisibility};
+use crate::{
+    expression::Expression,
+    scope::VarScope,
+    traits::{Eval, Simplify, VarVisibility},
+};
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Copy)]
@@ -16,12 +18,16 @@ impl VarVisibility for Constant {
 }
 
 impl Eval for Constant {
-    fn evaluate(&self, _scope: Scope) -> Result<Constant, String> {
+    fn evaluate(&self, _scope: &VarScope) -> Result<Constant, String> {
         Ok(*self)
     }
 }
 
 impl Simplify for Constant {
-    fn simplify(&mut self) {}
-    fn simplify_with(&mut self, _scope: crate::scope::VarScope) {}
+    fn simplify(self) -> Expression {
+        Expression::Constant(self)
+    }
+    fn simplify_with(self, _scope: &VarScope) -> Expression {
+        Expression::Constant(self)
+    }
 }

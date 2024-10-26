@@ -1,10 +1,17 @@
+use crate::{
+    constant::Constant,
+    expression::Expression,
+    scope::{self, VarScope},
+    traits::{Eval, Simplify, VarVisibility},
+};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VarName {
     name: char,
     subscript: Option<u8>,
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub struct Var {
     name: VarName,
     negated: bool,
@@ -46,19 +53,36 @@ impl Var {
     }
 }
 
-impl std::cmp::PartialOrd for Var {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
+impl Eval for Var {
+    fn evaluate(&self, scope: &VarScope) -> Result<crate::constant::Constant, String> {
+        match scope.mappings.get_key_value(&self.name) {
+            None => Err(format!(
+                "Variable '{}' isn't defined in this scope!",
+                self.name.get_string(false)
+            )),
+            Some((_, constant)) => Ok(*constant),
+        }
     }
 }
 
-impl std::cmp::Ord for Var {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.name
-            .cmp(&other.name)
-            .then_with(|| self.negated.cmp(&other.negated))
+impl VarVisibility for Var {
+    fn get_used_variables(&self, varset: &mut std::collections::HashSet<VarName>) {
+        varset.insert(self.name);
     }
 }
+
+impl Simplify for Var {
+    fn simplify(self) -> Expression {
+        Expression::Var(self)
+    }
+    fn simplify_with(self, scope: &VarScope) -> Expression {
+        match scope.mappings.get_key_value(&self.name) {
+            None => Expression::Var(self),
+            Some((_key, value)) => Expression::Constant(*value),
+        }
+    }
+}
+
 impl std::fmt::Display for Var {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.name.get_string(self.negated))

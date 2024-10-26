@@ -62,6 +62,61 @@ $ .printAST f
     - if t1 == t2 == var -> term {t1, t2}
     - else PARSING ERROR 
 
+## Possible AST optimizations
+
+### Term equality 
+OR 
+    var a 
+    var a 
+Evaluates to 
+var a 
+
+OR 
+    var a 
+    ~ 
+        var a 
+    ... 
+Evaluates to 
+1 
+
+
+
+### Known constants 
+AND 
+    0 
+    ... 
+Evaluates to 0 
+
+---
+XOR 
+    1 
+
+    a 
+Evaluates to 
+~a 
+
+---
+XOR  
+    0 
+    ... 
+Evalues to 
+XOR 
+    ... 
+
+---
+
+
+
+### Chainable operation 
+OR 
+    OR 
+        ...1 
+    OR 
+        ...2  
+Is the same as 
+OR 
+    ...1 
+    ...2 
 
 
 
