@@ -16,10 +16,10 @@ impl Term {
         for i in 0..len {
             // Check if the i-th bit is set in the minterm
             let bit = (minterm >> (len - 1 - i)) & 1;
-            let name = (b'a' + i as u8) as char; // Assuming variables are named 'a', 'b', 'c', ...
+            // let name = (b'a' + i as u8) as char; // Assuming variables are named 'a', 'b', 'c', ...
             let negated = bit == 0; // If the bit is 0, the variable is negated
 
-            vars.push(Var::new(name, negated));
+            vars.push(Var::new('x', negated, Some((i + 1) as u8)));
         }
 
         Term { vars }
