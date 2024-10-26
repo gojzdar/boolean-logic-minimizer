@@ -1,22 +1,48 @@
-#[derive(Debug, Clone, Copy)]
-pub struct Var {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct VarName {
     name: char,
     subscript: Option<u8>,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub struct Var {
+    name: VarName,
     negated: bool,
 }
+
+impl VarName {
+    pub fn new(name: char, subscript: Option<u8>) -> Self {
+        VarName { name, subscript }
+    }
+    pub fn get_string(&self, negated: bool) -> String {
+        let mut out = if negated {
+            // adds bar over character, to indicate negation
+            let letter_modifier = '\u{0304}';
+            format!("{}{}", self.name, letter_modifier)
+        } else {
+            format!("{}", self.name)
+        };
+
+        if let Some(subscript) = self.subscript {
+            out += decimal_to_subscript(subscript as u32).as_str();
+        }
+
+        out
+    }
+}
+
 impl Var {
-    pub fn new(name: char, negated: bool, subscript: Option<u8>) -> Self {
+    pub fn new(name: char, subscript: Option<u8>, negated: bool) -> Self {
         Var {
-            name,
+            name: VarName::new(name, subscript),
             negated,
-            subscript,
         }
     }
     pub fn is_dual(&self, other: &Self) -> bool {
         self.negated != other.negated && self.has_same_name(other)
     }
     pub fn has_same_name(&self, other: &Self) -> bool {
-        self.name == other.name && self.subscript == other.subscript
+        self.name == other.name
     }
 }
 
@@ -30,31 +56,12 @@ impl std::cmp::Ord for Var {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.name
             .cmp(&other.name)
-            .then_with(|| self.subscript.cmp(&other.subscript))
             .then_with(|| self.negated.cmp(&other.negated))
-    }
-}
-impl std::cmp::Eq for Var {}
-impl std::cmp::PartialEq for Var {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-            && self.negated == other.negated
-            && self.subscript == other.subscript
     }
 }
 impl std::fmt::Display for Var {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.negated {
-            // adds bar over character, to indicate negation
-            let letter_modifier = '\u{0304}';
-            write!(f, "{}{}", self.name, letter_modifier)?
-        } else {
-            write!(f, "{}", self.name)?
-        }
-        if let Some(subscript) = self.subscript {
-            write!(f, "{}", decimal_to_subscript(subscript as u32))?;
-        }
-        Ok(())
+        write!(f, "{}", self.name.get_string(self.negated))
     }
 }
 
@@ -82,4 +89,53 @@ fn decimal_to_subscript(num: u32) -> String {
     }
 
     result
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn correct_naming() {
+        let zneg = Var::new('z', None, true);
+
+        assert_eq!(
+            zneg,
+            Var {
+                name: VarName {
+                    name: 'z',
+                    subscript: None
+                },
+                negated: true
+            }
+        );
+    }
+
+    #[test]
+    fn correct_print() {
+        let x3neg = Var::new('x', Some(3), true);
+        assert_eq!(x3neg.to_string(), "x̄₃");
+
+        let y = Var::new('y', None, false);
+        assert_eq!(y.to_string(), "y");
+
+        let q240neg = Var::new('q', Some(240), true);
+        assert_eq!(q240neg.to_string(), "q̄₂₄₀");
+    }
+
+    #[test]
+    fn sorting() {
+        let x3neg = Var::new('x', Some(3), true);
+        let x3 = Var::new('x', Some(3), false);
+
+        let y = Var::new('y', None, false);
+        let y0 = Var::new('y', Some(0), false);
+        let y0neg = Var::new('y', Some(0), true);
+
+        let q240neg = Var::new('q', Some(240), true);
+
+        let mut vec = vec![y0, x3, y0neg, y, x3neg, q240neg];
+        vec.sort();
+        assert_eq!(vec, [q240neg, x3, x3neg, y, y0, y0neg]);
+    }
 }

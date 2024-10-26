@@ -19,7 +19,7 @@ impl Term {
             // let name = (b'a' + i as u8) as char; // Assuming variables are named 'a', 'b', 'c', ...
             let negated = bit == 0; // If the bit is 0, the variable is negated
 
-            vars.push(Var::new('x', negated, Some((i + 1) as u8)));
+            vars.push(Var::new('x', Some((i + 1) as u8), negated));
         }
 
         Term { vars }
