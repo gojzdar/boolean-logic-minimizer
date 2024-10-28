@@ -65,6 +65,13 @@ $ .printAST f
 ## Possible AST optimizations
 
 ### Term equality 
+NOT 
+    NOT 
+        ... 
+Evaluates to 
+...
+
+--- 
 OR 
     var a 
     var a 

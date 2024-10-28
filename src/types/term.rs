@@ -1,4 +1,11 @@
-use crate::var::Var;
+use std::env::vars;
+
+use crate::{
+    constant::Constant,
+    expression::Expression,
+    traits::{Eval, Simplify, VarVisibility},
+    var::Var,
+};
 
 #[derive(Debug, Clone)]
 pub struct Term {
@@ -83,6 +90,73 @@ impl Term {
         } else {
             Some(1)
         }
+    }
+}
+
+impl VarVisibility for Term {
+    fn get_used_variables(&self, varset: &mut std::collections::HashSet<crate::var::VarName>) {
+        for var in self.vars.iter() {
+            var.get_used_variables(varset);
+        }
+    }
+}
+impl Eval for Term {
+    fn evaluate(&self, scope: &crate::scope::VarScope) -> Result<Constant, String> {
+        for var in self.vars.iter() {
+            match var.evaluate(scope)? {
+                Constant::ZERO => return Ok(Constant::ZERO),
+                Constant::ONE => continue,
+            }
+        }
+        Ok(Constant::ONE)
+    }
+}
+impl Simplify for Term {
+    fn simplify_with(self, scope: &crate::scope::VarScope) -> Expression {
+        let mut required_vars: Vec<Var> = vec![];
+        for var in self.vars.into_iter() {
+            match var.simplify_with(scope) {
+                Expression::Constant(Constant::ZERO) => {
+                    return Expression::Constant(Constant::ZERO)
+                },
+                Expression::Constant(Constant::ONE) => continue,
+                Expression::Var(v) => required_vars.push(v),
+                other => unreachable!("Variable evaluation can only return Constant or the Variable. Happened with: {:?}", other),
+            };
+        }
+        if required_vars.is_empty() {
+            Expression::Constant(Constant::ONE)
+        } else {
+            Expression::Term(Term::new_from_vars(required_vars))
+        }
+    }
+    fn simplify(self) -> Expression {
+        // assumming Term is sorted, with non negated vars coming first
+        // let mut required_vars: Vec<Var> = vec![];
+
+        let mut redundant_vars = vec![false; self.vars.len()];
+
+        for i in 0..(self.vars.len()) {
+            let var1 = self.vars[i];
+
+            if i != self.vars.len() - 1 {
+                let var2 = self.vars[i + 1];
+                // check for duplicates, dual forms
+                if var1 == var2 {
+                    redundant_vars[i + 1] = true;
+                } else if var1.is_dual(&var2) {
+                    // x & ~x = 0
+                    return Expression::Constant(Constant::ZERO);
+                }
+            }
+        }
+        Expression::Term(Term::new_from_vars(
+            self.vars
+                .into_iter()
+                .enumerate()
+                .filter_map(|(i, v)| if !redundant_vars[i] { Some(v) } else { None })
+                .collect(),
+        ))
     }
 }
 
