@@ -96,7 +96,11 @@ impl Operation {
             }
         }
 
-        Expression::Operation(Self::AND(new_exp))
+        match new_exp.len() {
+            0 => Expression::Constant(Constant::ONE),
+            1 => new_exp.into_iter().next().unwrap(),
+            _ => Expression::Operation(Self::AND(new_exp)),
+        }
     }
     fn simplify_and_with(vecexp: Vec<Expression>, scope: &VarScope) -> Expression {
         let mut new_exp: Vec<Expression> = vec![];
@@ -111,8 +115,11 @@ impl Operation {
                 other => new_exp.push(other),
             }
         }
-
-        Expression::Operation(Self::AND(new_exp))
+        match new_exp.len() {
+            0 => Expression::Constant(Constant::ONE),
+            1 => new_exp.into_iter().next().unwrap(),
+            _ => Expression::Operation(Self::AND(new_exp)),
+        }
     }
     fn simplify_or(vecexp: Vec<Expression>) -> Expression {
         let mut new_exp: Vec<Expression> = vec![];
@@ -126,7 +133,11 @@ impl Operation {
             }
         }
 
-        Expression::Operation(Self::OR(new_exp))
+        match new_exp.len() {
+            0 => Expression::Constant(Constant::ZERO),
+            1 => new_exp.into_iter().next().unwrap(),
+            _ => Expression::Operation(Self::OR(new_exp)),
+        }
     }
     fn simplify_or_with(vecexp: Vec<Expression>, scope: &VarScope) -> Expression {
         let mut new_exp: Vec<Expression> = vec![];
@@ -139,8 +150,11 @@ impl Operation {
                 other => new_exp.push(other),
             }
         }
-
-        Expression::Operation(Self::OR(new_exp))
+        match new_exp.len() {
+            0 => Expression::Constant(Constant::ZERO),
+            1 => new_exp.into_iter().next().unwrap(),
+            _ => Expression::Operation(Self::OR(new_exp)),
+        }
     }
     fn simplify_xor(vecexp: Vec<Expression>) -> Expression {
         let mut new_exp: Vec<Expression> = vec![];
@@ -155,12 +169,22 @@ impl Operation {
             }
         }
 
-        let out = Expression::Operation(Self::XOR(new_exp));
+        let negate_result = spare_ones % 2 == 1;
 
-        if spare_ones % 2 == 1 {
-            Expression::Operation(Self::NOT(Box::new(out)))
+        if new_exp.is_empty() {
+            return Expression::Constant(Constant::ZERO.negate_if(negate_result));
+        }
+
+        let exp = match new_exp.len() {
+            0 => unreachable!(),
+            1 => new_exp.into_iter().next().unwrap(),
+            _ => Expression::Operation(Operation::XOR(new_exp)),
+        };
+
+        if negate_result {
+            Expression::Operation(Operation::NOT(Box::new(exp)))
         } else {
-            out
+            exp
         }
     }
 
@@ -177,12 +201,22 @@ impl Operation {
             }
         }
 
-        let out = Expression::Operation(Self::XOR(new_exp));
+        let negate_result = spare_ones % 2 == 1;
 
-        if spare_ones % 2 == 1 {
-            Expression::Operation(Self::NOT(Box::new(out)))
+        if new_exp.is_empty() {
+            return Expression::Constant(Constant::ZERO.negate_if(negate_result));
+        }
+
+        let exp = match new_exp.len() {
+            0 => unreachable!(),
+            1 => new_exp.into_iter().next().unwrap(),
+            _ => Expression::Operation(Operation::XOR(new_exp)),
+        };
+
+        if negate_result {
+            Expression::Operation(Operation::NOT(Box::new(exp)))
         } else {
-            out
+            exp
         }
     }
 }

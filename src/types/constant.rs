@@ -18,6 +18,13 @@ impl Constant {
             Self::ONE => Constant::ZERO,
         }
     }
+    pub fn negate_if(self, do_negate: bool) -> Constant {
+        if do_negate {
+            self.negate()
+        } else {
+            self
+        }
+    }
 }
 
 impl From<bool> for Constant {
@@ -27,6 +34,12 @@ impl From<bool> for Constant {
         } else {
             Constant::ZERO
         }
+    }
+}
+
+impl From<Constant> for bool {
+    fn from(value: Constant) -> Self {
+        value == Constant::ONE
     }
 }
 

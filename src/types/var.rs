@@ -1,7 +1,6 @@
 use crate::{
-    constant::Constant,
     expression::Expression,
-    scope::{self, VarScope},
+    scope::VarScope,
     traits::{Eval, Simplify, VarVisibility},
 };
 
@@ -55,12 +54,12 @@ impl Var {
 
 impl Eval for Var {
     fn evaluate(&self, scope: &VarScope) -> Result<crate::constant::Constant, String> {
-        match scope.mappings.get_key_value(&self.name) {
+        match scope.get(&self.name) {
             None => Err(format!(
                 "Variable '{}' isn't defined in this scope!",
                 self.name.get_string(false)
             )),
-            Some((_, constant)) => Ok(*constant),
+            Some(constant) => Ok(*constant),
         }
     }
 }
@@ -76,9 +75,9 @@ impl Simplify for Var {
         Expression::Var(self)
     }
     fn simplify_with(self, scope: &VarScope) -> Expression {
-        match scope.mappings.get_key_value(&self.name) {
+        match scope.get(&self.name) {
             None => Expression::Var(self),
-            Some((_key, value)) => Expression::Constant(*value),
+            Some(value) => Expression::Constant(*value),
         }
     }
 }

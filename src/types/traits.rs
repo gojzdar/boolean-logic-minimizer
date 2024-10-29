@@ -19,3 +19,10 @@ pub trait VarVisibility {
 }
 
 pub trait Operator: Eval + Simplify + VarVisibility {}
+// pub trait FixedLengthOperator: Operator {}
+// pub trait VariableLengthOperator: Operator {
+//     fn zero_args_behavior(self) -> Constant;
+//     fn one_arg_behavior(self, arg: Expression) -> Expression;
+//
+//     fn is_valid_argument_count(&self, arguments: usize) -> bool;
+// }

@@ -1,5 +1,3 @@
-use std::env::vars;
-
 use crate::{
     constant::Constant,
     expression::Expression,
