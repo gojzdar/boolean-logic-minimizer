@@ -1,6 +1,7 @@
 use crate::{
     constant::Constant,
     expression::Expression,
+    operation::Operation,
     traits::{Eval, Simplify, VarVisibility},
     var::Var,
 };
@@ -29,24 +30,7 @@ impl Term {
 
         Term { vars }
     }
-    pub fn is_neighbor(&self, other: &Self) -> bool {
-        if self.vars.len() != other.vars.len() {
-            return false;
-        }
-        let mut has_differed = false;
-        for (var1, var2) in self.vars.iter().zip(other.vars.iter()) {
-            if !var1.has_same_name(var2) {
-                return false;
-            }
-            if var1.is_dual(var2) {
-                if has_differed {
-                    return false;
-                }
-                has_differed = true
-            }
-        }
-        has_differed
-    }
+
     pub fn new_from_neighbors(term1: &Self, term2: &Self) -> Option<Self> {
         if !term1.is_neighbor(term2) {
             return None;
@@ -64,8 +48,37 @@ impl Term {
         Some(Self::new_from_vars(merged))
     }
 
+    pub fn apply_de_morgan(self) -> Expression {
+        let new_vars = self
+            .vars
+            .into_iter()
+            .map(|v| Expression::Var(v.negate()))
+            .collect();
+        Expression::Operation(Operation::NOT(Box::new(Expression::Operation(
+            Operation::OR(new_vars),
+        ))))
+    }
+
     pub fn has_var(&self, var: Var) -> bool {
         self.vars.iter().any(|e| var == *e)
+    }
+    pub fn is_neighbor(&self, other: &Self) -> bool {
+        if self.vars.len() != other.vars.len() {
+            return false;
+        }
+        let mut has_differed = false;
+        for (var1, var2) in self.vars.iter().zip(other.vars.iter()) {
+            if !var1.has_same_name(var2) {
+                return false;
+            }
+            if var1.is_dual(var2) {
+                if has_differed {
+                    return false;
+                }
+                has_differed = true
+            }
+        }
+        has_differed
     }
 
     /// Returns None if none are redundant. If first is redundant, it returns 1, otherwise 2.

@@ -18,7 +18,15 @@ pub trait VarVisibility {
     fn get_used_variables(&self, varset: &mut HashSet<VarName>);
 }
 
-pub trait Operator: Eval + Simplify + VarVisibility {}
+pub trait Operator: Eval + Simplify + VarVisibility {
+    // a * b = b * a
+    // Allows sorting of terms in expression, like based on tree depth to avoid long computations
+    fn is_commutative(&self) -> bool;
+    // (a * b) * c = a * (b * c)
+    // Allows for converting Op(x1, x2, ..., Op(y1, y2, ...)) -> Op(x1, x2, ..., y1, y2, ...)
+    fn is_associative(&self) -> bool;
+}
+
 // pub trait FixedLengthOperator: Operator {}
 // pub trait VariableLengthOperator: Operator {
 //     fn zero_args_behavior(self) -> Constant;

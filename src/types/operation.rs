@@ -14,7 +14,16 @@ pub enum Operation {
     XOR(Vec<Expression>),
 }
 
-impl Operator for Operation {}
+impl Operator for Operation {
+    fn is_commutative(&self) -> bool {
+        // NOT, AND, OR and XOR are all commutative
+        true
+    }
+    fn is_associative(&self) -> bool {
+        // NOT, AND, OR and XOR are all associative
+        true
+    }
+}
 
 impl VarVisibility for Operation {
     fn get_used_variables(&self, varset: &mut std::collections::HashSet<crate::var::VarName>) {

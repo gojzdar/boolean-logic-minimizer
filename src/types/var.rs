@@ -50,6 +50,12 @@ impl Var {
     pub fn has_same_name(&self, other: &Self) -> bool {
         self.name == other.name
     }
+    pub fn negate(self) -> Self {
+        Var {
+            name: self.name,
+            negated: !self.negated,
+        }
+    }
 }
 
 impl Eval for Var {
